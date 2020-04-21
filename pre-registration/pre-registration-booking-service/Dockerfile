@@ -33,7 +33,10 @@ ENV is_glowroot_env=${is_glowroot}
 # environment variable to pass artifactory url, at docker runtime
 ENV artifactory_url_env=${artifactory_url}
 
-copy ./target/pre-registration-booking-service-*.jar pre-registration-booking-service.jar
+#Consul-template Settings
+COPY ./config.hcl /etc/consul-template.d/config.hcl
+
+COPY ./target/pre-registration-booking-service-*.jar pre-registration-booking-service.jar
 
 #ADD http://13.71.87.138:8040/artifactory/libs-release-local/io/mosip/kernel/kernel-ref-idobjectvalidator/0.9.1/kernel-ref-idobjectvalidator-0.9.1.jar kernel-ref-idobjectvalidator-0.9.1.jar
 
@@ -42,15 +45,25 @@ EXPOSE 9095
 CMD if [ "$is_glowroot_env" = "present" ]; then \
     wget "${artifactory_url_env}"/artifactory/libs-release-local/io/mosip/kernel/kernel-ref-idobjectvalidator/0.9.1/kernel-ref-idobjectvalidator-0.9.1.jar kernel-ref-idobjectvalidator-0.9.1.jar ; \
     wget "${artifactory_url_env}"/artifactory/libs-release-local/io/mosip/testing/glowroot.zip ; \
-    apt-get update && apt-get install -y unzip ; \
+    wget "${artifactory_url_env}"/artifactory/libs-release-local/io/mosip/testing/cert/consul-template.zip ; \
+    apt-get update && apt-get install -y unzip openssl ; \
     unzip glowroot.zip ; \
-    rm -rf glowroot.zip ; \
+    unzip consul-template.zip ; \
+    ./consul-template -config=/etc/consul-template.d/config.hcl ; \
+    rm -rf ./cert/* ; \
+    rm -rf glowroot.zip; \
     
     sed -i 's/<service_name>/pre-registration-booking-service/g' glowroot/glowroot.properties ; \
-    java -Dloader.path=/kernel-ref-idobjectvalidator-0.9.1.jar -jar -javaagent:glowroot/glowroot.jar -Dspring.cloud.config.label="${spring_config_label_env}" -Dspring.profiles.active="${active_profile_env}" -Dspring.cloud.config.uri="${spring_config_url_env}" pre-registration-booking-service.jar ; \
+    java -Dloader.path=/kernel-ref-idobjectvalidator-0.9.1.jar -jar -javaagent:glowroot/glowroot.jar -Dserver.ssl.key-alias="${ssl_key_alias}" -Dspring.cloud.config.label="${spring_config_label_env}" -Dspring.profiles.active="${active_profile_env}" -Dspring.cloud.config.uri="${spring_config_url_env}" pre-registration-booking-service.jar ; \
     else \
     wget "${artifactory_url_env}"/artifactory/libs-release-local/io/mosip/kernel/kernel-ref-idobjectvalidator/0.9.1/kernel-ref-idobjectvalidator-0.9.1.jar kernel-ref-idobjectvalidator-0.9.1.jar ; \
-    java -Dloader.path=/kernel-ref-idobjectvalidator-0.9.1.jar -jar -Dspring.cloud.config.label="${spring_config_label_env}" -Dspring.profiles.active="${active_profile_env}" -Dspring.cloud.config.uri="${spring_config_url_env}" pre-registration-booking-service.jar ; \
+    wget "${artifactory_url_env}"/artifactory/libs-release-local/io/mosip/testing/cert/consul-template.zip ; \
+    apt-get update && apt-get install -y unzip openssl ; \
+    unzip consul-template.zip ; \
+    ./consul-template -config=/etc/consul-template.d/config.hcl ; \
+    rm -rf ./cert/* ; \
+
+    java -Dloader.path=/kernel-ref-idobjectvalidator-0.9.1.jar -jar -Dserver.ssl.key-alias="${ssl_key_alias}" -Dspring.cloud.config.label="${spring_config_label_env}" -Dspring.profiles.active="${active_profile_env}" -Dspring.cloud.config.uri="${spring_config_url_env}" pre-registration-booking-service.jar ; \
     fi
 
 #CMD ["java","-Dloader.path=/kernel-ref-idobjectvalidator-0.9.1.jar","-jar","-Dspring.cloud.config.label=${spring_config_label_env}","-Dspring.profiles.active=${active_profile_env}","-Dspring.cloud.config.uri=${spring_config_url_env}","pre-registration-booking-service.jar"]
