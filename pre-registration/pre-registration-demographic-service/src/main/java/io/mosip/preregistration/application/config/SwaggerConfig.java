@@ -61,6 +61,7 @@ public class SwaggerConfig {
 	 * @return {@link ApiInfo}
 	 */
 	private ApiInfo apiInfo() {
+		System.out.println("DEBUG KER AUTH FAILURE 1:Title: "+TITLE+" Description: "+DESCRIPTION+" Service Version: "+SERVICE_VERSION);
 		return new ApiInfoBuilder().title(TITLE).description(DESCRIPTION).version(SERVICE_VERSION).build();
 	}
 
@@ -72,6 +73,9 @@ public class SwaggerConfig {
 	@Bean
 	public Docket api() {
 		boolean swaggerBaseUrlSet = false;
+
+		System.out.println("DEBUG KER AUTH FAILURE 2:swaggerBaseUrl : "+swaggerBaseUrl );
+
 		if (!localEnv && swaggerBaseUrl != null && !swaggerBaseUrl.isEmpty()) {
 			try {
 				proto = new URL(swaggerBaseUrl).getProtocol();
@@ -84,6 +88,7 @@ public class SwaggerConfig {
 				}
 				swaggerBaseUrlSet = true;
 			} catch (MalformedURLException e) {
+				e.printStackTrace();
 				System.err.println("SwaggerUrlException: " + e);
 			}
 		}
@@ -91,8 +96,11 @@ public class SwaggerConfig {
 		Docket docket = new Docket(DocumentationType.SWAGGER_2).apiInfo(apiInfo()).select()
 				.paths(PathSelectors.regex("(?!/(error).*).*")).build();
 
+		System.out.println("DEBUG KER AUTH FAILURE 3:swaggerBaseUrlSet: "+swaggerBaseUrlSet);
+
 		if (swaggerBaseUrlSet) {
 			docket.protocols(protocols()).host(hostWithPort);
+			System.out.println("DEBUG KER AUTH FAILURE 6:hostWithPort: "+hostWithPort);
 			System.out.println("\nSwagger Base URL: " + proto + "://" + hostWithPort + "\n");
 		}
 
@@ -101,6 +109,7 @@ public class SwaggerConfig {
 
 	private Set<String> protocols() {
 		Set<String> protocols = new HashSet<>();
+		System.out.println("DEBUG KER AUTH FAILURE 5:protocols : "+protocols );
 		protocols.add(proto);
 		return protocols;
 	}
